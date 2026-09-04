@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>用户接口演示</title>
+    <style>
+      :root {
+        --ink: #1f1a14;
+        --muted: #6b6258;
+        --line: #d8cfc3;
+        --paper: #f6f1e8;
+        --card: #fffdf8;
+        --accent: #c45c26;
+        --ok: #2f6f4e;
+        --bad: #b42318;
+        --get: #1d4e89;
+        --post: #2f6f4e;
+        --patch: #9a6700;
+        --delete: #b42318;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top right, #f3e0c8 0, transparent 28rem),
+          var(--paper);
+        font: 15px/1.5 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 28px 32px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 24px;
+        letter-spacing: 0.02em;
+      }
+
+      header p,
+      .hint {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .token-box {
+        min-width: 280px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        background: var(--card);
+      }
+
+      .token-box strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .token-box code {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+        gap: 20px;
+        padding: 20px 32px 32px;
+      }
+
+      section {
+        padding: 16px;
+        border: 1px solid var(--line);
+        background: var(--card);
+      }
+
+      section h2 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 12px;
+        font-size: 15px;
+      }
+
+      .ops {
+        display: grid;
+        gap: 14px;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      label {
+        display: grid;
+        gap: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      input {
+        width: 140px;
+        padding: 7px 8px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      input.wide {
+        width: 180px;
+      }
+
+      button,
+      .ghost {
+        border: 0;
+        padding: 8px 12px;
+        background: var(--ink);
+        color: #fff;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: transparent;
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .method {
+        padding: 1px 6px;
+        border-radius: 2px;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .GET { background: var(--get); }
+      .POST { background: var(--post); }
+      .PATCH { background: var(--patch); }
+      .DELETE { background: var(--delete); }
+
+      .lock {
+        color: var(--accent);
+        font-size: 12px;
+      }
+
+      .result {
+        position: sticky;
+        top: 16px;
+        min-height: 420px;
+      }
+
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .status-ok { color: var(--ok); }
+      .status-bad { color: var(--bad); }
+
+      pre {
+        margin: 0;
+        max-height: calc(100vh - 220px);
+        overflow: auto;
+        padding: 14px;
+        background: #201a14;
+        color: #f4e7d4;
+        font: 13px/1.45 ui-monospace, Consolas, monospace;
+      }
+
+      .chips button {
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+
+      @media (max-width: 900px) {
+        header,
+        main {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        main,
+        header {
+          display: block;
+        }
+
+        .token-box,
+        .result {
+          margin-top: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>用户管理系统 · 接口演示</h1>
+        <p>同域调用 Nest 接口。带锁的是守卫接口，先登录再点。终端搜 <code>[生命周期]</code> 可对照执行顺序。</p>
+      </div>
+      <div class="token-box">
+        <strong>当前 token</strong>
+        <code id="tokenView">未登录</code>
+        <div class="row" style="margin-top: 10px">
+          <label class="row" style="width: auto">
+            <input id="skipAuth" type="checkbox" style="width: auto" />
+            这次不带 token
+          </label>
+          <button class="secondary" type="button" id="clearToken">退出</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="ops">
+        <section>
+          <h2><span class="method POST">POST</span> /user/login 登录</h2>
+          <div class="row">
+            <label>用户名<input id="loginName" class="wide" value="前端开发者" /></label>
+            <button type="button" data-action="login">登录</button>
+          </div>
+          <div class="row chips">
+            <button class="secondary" type="button" data-fill="前端开发者">前端开发者</button>
+            <button class="secondary" type="button" data-fill="Nest学习者">Nest学习者</button>
+            <button class="secondary" type="button" data-fill="任意名字">任意名字</button>
+          </div>
+          <p class="hint">公开接口。名字对上预设用户会绑定那条记录，对不上也能换 token。</p>
+        </section>
+
+        <section>
+          <h2><span class="method GET">GET</span> /user/profile 当前用户 <span class="lock">需登录</span></h2>
+          <button type="button" data-action="profile">查看个人信息</button>
+        </section>
+
+        <section>
+          <h2><span class="method GET">GET</span> /user 列表</h2>
+          <div class="row">
+            <label>page<input id="page" type="number" value="1" min="1" /></label>
+            <label>size<input id="size" type="number" value="10" min="1" /></label>
+            <label>keyword<input id="keyword" class="wide" placeholder="可选" /></label>
+            <button type="button" data-action="list">查询列表</button>
+          </div>
+        </section>
+
+        <section>
+          <h2><span class="method GET">GET</span> /user/:id 详情</h2>
+          <div class="row">
+            <label>id<input id="userId" type="number" value="1" min="1" /></label>
+            <button type="button" data-action="detail">查询详情</button>
+            <button class="secondary" type="button" data-action="detail-miss">查不存在的 999</button>
+          </div>
+        </section>
+
+        <section>
+          <h2><span class="method POST">POST</span> /user 新增 <span class="lock">需登录</span></h2>
+          <div class="row">
+            <label>name<input id="createName" class="wide" value="小王" /></label>
+            <label>age<input id="createAge" type="number" value="20" min="1" /></label>
+            <button type="button" data-action="create">新增用户</button>
+          </div>
+        </section>
+
+        <section>
+          <h2>
+            <span class="method PATCH">PATCH</span> / <span class="method DELETE">DELETE</span>
+            /user/:id 改删 <span class="lock">需登录</span>
+          </h2>
+          <div class="row">
+            <label>id<input id="mutateId" type="number" value="3" min="1" /></label>
+            <label>name<input id="updateName" class="wide" placeholder="可选" /></label>
+            <label>age<input id="updateAge" type="number" placeholder="可选" min="1" /></label>
+            <button type="button" data-action="update">修改</button>
+            <button class="secondary" type="button" data-action="remove">删除</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="result">
+        <h2>最近一次响应</h2>
+        <div class="meta">
+          <span id="reqLine">还没有发请求</span>
+          <span id="reqStatus"></span>
+        </div>
+        <pre id="reqBody">点左侧按钮即可。成功或失败都会显示在这里。</pre>
+      </section>
+    </main>
+
+    <script>
+      const tokenView = document.querySelector('#tokenView');
+      const reqLine = document.querySelector('#reqLine');
+      const reqStatus = document.querySelector('#reqStatus');
+      const reqBody = document.querySelector('#reqBody');
+      const KEY = 'nest-demo-token';
+
+      const renderToken = () => {
+        tokenView.textContent = localStorage.getItem(KEY) || '未登录';
+      };
+
+      const show = (method, path, status, data, ms) => {
+        reqLine.textContent = `${method} ${path} · ${Math.round(ms)}ms`;
+        reqStatus.textContent = status;
+        reqStatus.className = status >= 200 && status < 300 ? 'status-ok' : 'status-bad';
+        reqBody.textContent = JSON.stringify(data, null, 2);
+      };
+
+      const request = async (method, path, { query, body } = {}) => {
+        const url = new URL(path, location.origin);
+        Object.entries(query || {}).forEach(([key, value]) => {
+          if (value !== '' && value != null) url.searchParams.set(key, value);
+        });
+
+        const headers = { Accept: 'application/json' };
+        if (body) headers['Content-Type'] = 'application/json';
+        const token = localStorage.getItem(KEY);
+        if (token && !document.querySelector('#skipAuth').checked) {
+          headers.token = token;
+        }
+
+        const start = performance.now();
+        const res = await fetch(url, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        const data = await res.json();
+        show(method, url.pathname + url.search, res.status, data, performance.now() - start);
+
+        if (data?.data?.token) {
+          localStorage.setItem(KEY, data.data.token);
+          renderToken();
+        }
+        return data;
+      };
+
+      const actions = {
+        login: () => request('POST', '/user/login', { body: { name: loginName.value.trim() } }),
+        profile: () => request('GET', '/user/profile'),
+        list: () =>
+          request('GET', '/user', {
+            query: { page: page.value, size: size.value, keyword: keyword.value.trim() },
+          }),
+        detail: () => request('GET', `/user/${userId.value}`),
+        'detail-miss': () => request('GET', '/user/999'),
+        create: () =>
+          request('POST', '/user', {
+            body: { name: createName.value.trim(), age: Number(createAge.value) },
+          }),
+        update: () => {
+          const body = {};
+          if (updateName.value.trim()) body.name = updateName.value.trim();
+          if (updateAge.value !== '') body.age = Number(updateAge.value);
+          return request('PATCH', `/user/${mutateId.value}`, { body });
+        },
+        remove: () => request('DELETE', `/user/${mutateId.value}`),
+      };
+
+      document.body.addEventListener('click', (event) => {
+        const fill = event.target.closest('[data-fill]');
+        if (fill) {
+          loginName.value = fill.dataset.fill;
+          return;
+        }
+        const button = event.target.closest('[data-action]');
+        if (button) actions[button.dataset.action]();
+      });
+
+      document.querySelector('#clearToken').addEventListener('click', () => {
+        localStorage.removeItem(KEY);
+        renderToken();
+      });
+
+      renderToken();
+    </script>
+  </body>
+</html>
